@@ -23,6 +23,9 @@ from openpyxl import load_workbook
 
 import xarray as xr
 
+from scipy.interpolate import interp1d, splprep, splev
+import scipy.interpolate as spi
+
 
 def read_up_ramp_data(sheet, shear_rate, date, cols=['A','B','C','D','E','F'], rows=np.arange(4,1324,dtype=int)):
     data_nparray = np.zeros((len(cols),len(rows)))
@@ -83,3 +86,31 @@ def read_ampswp_data(sheet, shear_rate, date, cols=['A','B','C','D','E','F','G',
     da.attrs['prior_shear_rate'] = shear_rate
     da.attrs['date'] = date
     return da
+
+def area_bewteen_temp_ramps(upramp, downramp, shearrate, logvar=True, lower_temp=23, upper_temp = 33.9):
+    temperatures_up = upramp[shearrate].loc['temperature'].values
+    x1 = np.arange(0,len(temperatures_up))
+    bspline_coeffs_up, u_params1 = splprep([x1, temperatures_up], k = 3)
+    interpolated_temp_upramp = splev(u_params1, bspline_coeffs_up)
+    
+    temperatures_down = downramp[shearrate].loc['temperature'].values
+    x2 = np.arange(0,len(temperatures_down))
+    bspline_coeffs_down, u_params2 = splprep([x2, temperatures_down], k = 5)
+    interpolated_temp_downramp = splev(u_params2, bspline_coeffs_down)
+    
+    if logvar:
+        var_up = np.log(upramp[shearrate].loc['stress'])
+        var_down = np.log(downramp[shearrate].loc['stress'])
+    else:
+        var_up = upramp[shearrate].loc['stress']
+        var_down = downramp[shearrate].loc['stress']
+    
+    interp1d_upramp_func = interp1d(interpolated_temp_upramp[1], var_up)
+    interp1d_downramp_func = interp1d(interpolated_temp_downramp[1], var_down)
+    
+    new_temperature_spacing = 0.05 #set increment of temperature
+    new_temps = np.arange(lower_temp,upper_temp,new_temperature_spacing)
+    
+    
+    area_between_curves = np.sum((interp1d_downramp_func(new_temps) - interp1d_upramp_func(new_temps)) * new_temperature_spacing)
+    return area_between_curves
