@@ -87,8 +87,13 @@ def read_ampswp_data(sheet, shear_rate, date, cols=['A','B','C','D','E','F','G',
     da.attrs['date'] = date
     return da
 
-def area_bewteen_temp_ramps(upramp, downramp, shearrate, logvar=True, lower_temp=23, upper_temp = 33.9):
-    temperatures_up = upramp[shearrate].loc['temperature'].values
+def area_bewteen_temp_ramps(upramp, downramp, shearrate, logvar=True, lower_temp=23, upper_temp = 33.9,
+                            up_use_letter_in_key=None):
+    if up_use_letter_in_key is not None:
+        shearrate_up = '%s%s' % (shearrate, up_use_letter_in_key)
+    else:
+        shearrate_up = shearrate
+    temperatures_up = upramp[shearrate_up].loc['temperature'].values
     x1 = np.arange(0,len(temperatures_up))
     bspline_coeffs_up, u_params1 = splprep([x1, temperatures_up], k = 3)
     interpolated_temp_upramp = splev(u_params1, bspline_coeffs_up)
@@ -99,10 +104,10 @@ def area_bewteen_temp_ramps(upramp, downramp, shearrate, logvar=True, lower_temp
     interpolated_temp_downramp = splev(u_params2, bspline_coeffs_down)
     
     if logvar:
-        var_up = np.log(upramp[shearrate].loc['stress'])
+        var_up = np.log(upramp[shearrate_up].loc['stress'])
         var_down = np.log(downramp[shearrate].loc['stress'])
     else:
-        var_up = upramp[shearrate].loc['stress']
+        var_up = upramp[shearrate_up].loc['stress']
         var_down = downramp[shearrate].loc['stress']
     
     interp1d_upramp_func = interp1d(interpolated_temp_upramp[1], var_up)
