@@ -63,15 +63,16 @@ def read_peakhold_data(sheet, shear_rate, date, cols=['A','B','C','D','E','F'], 
     da.attrs['date'] = date
     return da
 
-def read_freqswp_data(sheet, shear_rate, date, cols=['A','B','C','D','E','F','G','H','I'], rows=np.arange(4,20,dtype=int)):
+def read_freqswp_data(sheet, temperature, geom, date, cols=['A','B','C','D','E','F','G','H','I','J'], rows=np.arange(4,20,dtype=int)):
     data_nparray = np.zeros((len(cols),len(rows)))
     for i,row_num in enumerate(rows):
         for j,col_lett in enumerate(cols):
             data_nparray[j,i] = sheet['%s%i' % (col_lett, row_num)].value
     variables = ['storage_modulus','loss_modulus','tan_delta','angular_freq','osc_torque','step_time',
-                'temperature','raw_phase','osc_displacement']
+                'temperature','raw_phase','osc_displacement','time']
     da = xr.DataArray(data_nparray, coords=[variables, rows-rows[0]], dims=['variable','index'])
-    da.attrs['prior_shear_rate'] = shear_rate
+    da.attrs['temperature'] = temperature
+    da.attrs['geometry'] = geom
     da.attrs['date'] = date
     return da
 
