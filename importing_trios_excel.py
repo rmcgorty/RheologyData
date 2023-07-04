@@ -193,15 +193,16 @@ def read_freqswp_data(sheet, temperature, geom, date, cols=['A','B','C','D','E',
     da.attrs['date'] = date
     return da
 
-def read_ampswp_data(sheet, shear_rate, date, cols=['A','B','C','D','E','F','G','H','I','J'], rows=np.arange(4,25,dtype=int)):
+def read_ampswp_data(sheet, temperature, geom, date, cols=['A','B','C','D','E','F','G','H','I','J','K'], rows=np.arange(4,55,dtype=int)):
     data_nparray = np.zeros((len(cols),len(rows)))
     for i,row_num in enumerate(rows):
         for j,col_lett in enumerate(cols):
             data_nparray[j,i] = sheet['%s%i' % (col_lett, row_num)].value
     variables = ['storage_modulus','loss_modulus','tan_delta','angular_freq','osc_torque','step_time',
-                'temperature','raw_phase','osc_displacement','osc_strain']
+                'temperature','raw_phase','osc_displacement','time', 'osc_strain']
     da = xr.DataArray(data_nparray, coords=[variables, rows-rows[0]], dims=['variable','index'])
-    da.attrs['prior_shear_rate'] = shear_rate
+    da.attrs['temperature'] = temperature
+    da.attrs['geometry'] = geom
     da.attrs['date'] = date
     return da
 
